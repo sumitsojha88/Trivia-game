@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	int n;
+	cin>>n;
+	while(n--){
+	    int change,k;
+	    cin>>change>>k;
+	     int a[k];
+	    for(int i=0;i<k;i++)cin>>a[i];
+	    sort(a,a+k);
+	    //exception handling
+	    if(k==2){
+	        if(change<a[1]-a[0]){
+	            a[0]=a[0]+change;
+	            a[1]=a[1]-change;
+	            cout<<a[1]-a[0]<<endl;
+	        }
+	        else cout<<a[1]-a[0]<<endl;
+	        continue;
+	    }
+	    //add change in first element and subtract change from last element
+        a[0]=a[0]+change;
+	    a[k-1]=a[k-1]-change;
+	    int mid=(a[0]+a[k-1])/2; //converge all array to this mid
+	    for(int i=1;i<k-1;i++){
+	        int lower=a[i]-change;
+	        int higher=a[i]+change;
+	        
+	       a[i]=abs(lower-mid)<abs(higher-mid)?lower:higher;
+	         
+	         
+	    
+	    
+	    
+	}
+	sort(a,a+k);
+	cout<<a[k-1]-a[0]<<endl;
+
+}	return 0;
+}
