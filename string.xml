@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">sojhaquiz</string>
+    <string name="next_button">next_button</string>
+    <string name="previous_button">previous_button</string>
+    <string name="False">False</string>
+    <string name="false_button">False</string>
+    <string name="true_button">True</string>
+    <string name="title">SOJHAQUIZ</string>
+    <string name="content_button">0 out of 100</string>
+    <string name="wrong_answer">wrong</string>
+    <string name="correct_answer">correct</string>
+    <string name="Correct">Correct!</string>
+</resources>
