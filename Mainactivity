@@ -1,0 +1,224 @@
+package com.example.sojhaquiz;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+
+import android.graphics.Color;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.nio.file.ClosedDirectoryStreamException;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
+
+import controller.AppController2;
+import data.AnswerListAsyncResponse;
+import data.QuestionBank;
+import model.Question;
+import model.score;
+import util.Prefs2;
+import util.prefs;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+     private TextView questionTextview;
+     private  TextView questioncounterTexview;
+     private Button trueButton;
+     private Button falseButton;
+     private ImageButton nextbutton;
+     private ImageButton prevButton;
+     private TextView highestScoreTextView;
+     private int currentQuestionIndex = 0;
+     private List<Question> questionList;
+     private TextView scoreTextView;
+     private int scorecounter = 0;
+     private model.score score;
+     private Prefs2 prefs2;
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        score = new score();
+
+        prefs2 = new Prefs2(MainActivity.this);
+
+     //   Log.d("Second", "onCreate: " + prefs2.getHighScore());
+        scoreTextView = findViewById(R.id.score_text);
+        nextbutton = findViewById(R.id.next_button);
+        prevButton = findViewById(R.id.prev_button);
+        trueButton = findViewById(R.id.true_button);
+        falseButton = findViewById(R.id.false_button);
+        questioncounterTexview = findViewById(R.id.counter_text);
+        questionTextview = findViewById(R.id.question_textview);
+        highestScoreTextView =findViewById(R.id.highestscore_text);
+
+        nextbutton.setOnClickListener(this);
+        prevButton.setOnClickListener(this);
+        trueButton.setOnClickListener(this);
+        falseButton.setOnClickListener(this);
+
+        scoreTextView.setText(MessageFormat.format("current score: {0} "  , String.valueOf(score.getScore())));
+
+        highestScoreTextView.setText(MessageFormat.format("Highest Score : {0}", String.valueOf(prefs2.getHighScore())));
+        questionList = new QuestionBank().getQuestions(new AnswerListAsyncResponse() {
+            @Override
+            public void processFinished(ArrayList<Question> questionArrayList) {
+
+                questionTextview.setText(questionArrayList.get(currentQuestionIndex).getAnswer());
+                questioncounterTexview.setText(MessageFormat.format("{0} / {1}", currentQuestionIndex, questionArrayList.size()));
+
+
+
+                Log.d("Inside", "processFinished: " + questionArrayList);
+               //  Log.d("MAIN", "onCreate: " + questionList);
+            }
+        });
+
+
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.prev_button:
+                if(currentQuestionIndex > 0)
+                {
+                    currentQuestionIndex = (currentQuestionIndex - 1)%questionList.size();
+                    updateQuestion();;
+                }
+                break;
+            case R.id.next_button:
+               prefs2.saveHighScore(scorecounter);
+            //    Log.d("Prefs2", "onClick: " + prefs2.getHighScore());
+                currentQuestionIndex = (currentQuestionIndex +1)%questionList.size();
+                updateQuestion();
+                break;
+            case R.id.true_button:
+                checkAnswer(true);
+                updateQuestion();
+                break;
+            case R.id.false_button:
+                checkAnswer(false);
+                updateQuestion();
+                break;
+        }
+
+    }
+
+    private void checkAnswer(boolean userChooseCorrect) {
+      boolean answerIsTrue = questionList.get(currentQuestionIndex).isAnswerTrue();
+      int toastMessageId = 0;
+      if(userChooseCorrect == answerIsTrue){
+          fadeView();
+          addPoints();
+          toastMessageId = R.string.Correct ;
+      } else{
+          shakeAnimation();
+          deductPoints();
+          toastMessageId = R.string.wrong_answer ;
+      }
+        Toast.makeText(MainActivity.this, toastMessageId,Toast.LENGTH_SHORT).show();
+
+    }
+       private  void addPoints(){
+        scorecounter +=100;
+        score.setScore(scorecounter);
+       // scoreTextView.setText(String.valueOf(score.getScore()));
+           scoreTextView.setText(MessageFormat.format("current score: {0} "  , String.valueOf(score.getScore())));
+
+        //   Log.d("score:", "addPoints: " + score.getScore());
+       }
+
+
+    private  void deductPoints(){
+        scorecounter -=100;
+        if(scorecounter > 0)
+        {
+            score.setScore(scorecounter);
+            scoreTextView.setText(MessageFormat.format("current score: {0} " , String.valueOf(score.getScore())));
+         //   scoreTextView.setText(String.valueOf(score.getScore()));
+        } else
+        {
+            scorecounter = 0;
+            score.setScore(scorecounter);
+            scoreTextView.setText(MessageFormat.format("current score: {0} "  , String.valueOf(score.getScore())));
+          // Log.d("Score Bad", "deductPoints: " + score.getScore());
+        }
+
+
+      //   Log.d("score:", "addPoints: " + score.getScore());
+    }
+    private void updateQuestion() {
+        String question = questionList.get(currentQuestionIndex).getAnswer();
+        questionTextview.setText(question);
+        questioncounterTexview.setText(MessageFormat.format("{0} / {1}", currentQuestionIndex, questionList.size()));
+    }
+      private void fadeView(){
+        final CardView cardView = findViewById(R.id.cardView);
+          AlphaAnimation alphaAnimation = new AlphaAnimation(1.0f,0.0f);
+
+          alphaAnimation.setDuration(350);
+          alphaAnimation.setRepeatCount(1);
+          alphaAnimation.setRepeatMode(Animation.REVERSE);
+
+          cardView.setAnimation(alphaAnimation);
+
+          alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
+              @Override
+              public void onAnimationStart(Animation animation) {
+                  cardView.setCardBackgroundColor(Color.GREEN);
+              }
+
+              @Override
+              public void onAnimationEnd(Animation animation) {
+                  cardView.setCardBackgroundColor(Color.WHITE);
+                  currentQuestionIndex = (currentQuestionIndex +1)%questionList.size();
+                  updateQuestion();
+              }
+
+              @Override
+              public void onAnimationRepeat(Animation animation) {
+
+              }
+          });
+      }
+    private void shakeAnimation() {
+        Animation shake = AnimationUtils.loadAnimation(MainActivity.this, R.anim.shake_animation);
+        final CardView cardView = findViewById(R.id.cardView);
+        cardView.setAnimation(shake);
+
+        shake.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                cardView.setCardBackgroundColor(Color.RED);
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                cardView.setCardBackgroundColor(Color.WHITE);
+                currentQuestionIndex = (currentQuestionIndex + 1) % questionList.size();
+                updateQuestion();
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+    }
+
+    }
